@@ -62,9 +62,20 @@ local function iniciarMiSpy()
     local blockedRemotes, activeLoops, logs, queue, selected = {}, {}, {}, {}, nil
     local activeLoopLabels = {}
 
-    local function selectRemote(data)
+    local function formatArgs(args)
+        local s = ""
+        for i, v in pairs(args) do
+            local val = typeof(v) == "string" and "\""..v.."\"" or tostring(v)
+            s = s .. "\n    ["..tostring(i).."] = " .. val .. ","
+        end
+        return s
+    end
+
+local function selectRemote(data)
         selected = data
-        infoText.Text = "Remote: "..data.name.."\nPath: game."..data.obj:GetFullName()
+        local code = "local args = {" .. formatArgs(data.args) .. "\n}\ngame:GetService(\"ReplicatedStorage\")." .. data.name .. ":FireServer(unpack(args))"
+        infoText.Text = code
+        
         local isLooping = activeLoops[data.name] ~= nil
         local lBtn = sidePanel:FindFirstChild("LoopBtn")
         if lBtn then
