@@ -144,9 +144,8 @@ local function selectRemote(data)
         end
         
         code = code .. "\n}\n\n"
-        -- Aquí la corrección: usamos .. selected.name .. para que ponga el nombre real
         code = code .. 'game:GetService("ReplicatedStorage"):FindFirstChild("' .. selected.name .. '", true)'
-        code = code .. ':remote:FireServer(unpack(args))'
+        code = code .. ':FireServer(unpack(args))'
         
         setclipboard(code)
         infoText.Text = "¡CÓDIGO COPIADO!"
