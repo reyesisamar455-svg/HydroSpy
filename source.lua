@@ -134,21 +134,33 @@ local function selectRemote(data)
     end)
 
     copyBtn.MouseButton1Click:Connect(function()
-    if selected then
-        local code = "-- Script generado por HydroSpy\n\n"
+    if selected and selected.obj then
+        local remote = selected.obj
+        local path = remote:GetFullName() -- Esto obtiene la ruta completa (ej. game.ReplicatedStorage.Events.Remote)
+        
+        local code = "-- Script generado por HydroSpy (Ruta Universal)\n\n"
         code = code .. "local args = {"
         
         for i, v in pairs(selected.args) do 
-            local value = (typeof(v) == "string" and '"'..v..'"' or tostring(v))
+            local value = (typeof(v) == "string" and "\""..v.."\"" or tostring(v))
             code = code .. "\n    ["..i.."] = " .. value .. ","
         end
         
         code = code .. "\n}\n\n"
-        code = code .. 'game:GetService("ReplicatedStorage"):FindFirstChild("' .. selected.name .. '", true)'
-        code = code .. ':FireServer(unpack(args))'
+        local serviceName = remote:GetFullName():split(".")[1]
+        local remainingPath = path:sub(serviceName:len() + 2)
+        
+        code = code .. "game:GetService(\"" .. serviceName .. "\")"
+        
+        -- Si el objeto está dentro de carpetas, las añadimos usando corchetes para evitar errores por espacios
+        for _, part in ipairs(remainingPath:split(".")) do
+            code = code .. "[\"" .. part .. "\"]"
+        end
+        
+        code = code .. ":remote:FireServer(unpack(args))"
         
         setclipboard(code)
-        infoText.Text = "¡CÓDIGO COPIADO!"
+        infoText.Text = "¡COPIADA!"
     end
 end)
 
