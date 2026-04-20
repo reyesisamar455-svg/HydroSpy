@@ -84,14 +84,20 @@ local function selectRemote(data)
         end
     end
 
-    task.spawn(function()
-        while task.wait(1) do
-            for name, data in pairs(activeLoops) do
-                if data.obj then data.obj:FireServer(unpack(data.args)) end
+task.spawn(function()
+    while task.wait(1) do
+        for name, data in pairs(activeLoops) do
+            if data.obj then
+                if data.obj.ClassName == "RemoteFunction" then
+                    task.spawn(function() data.obj:InvokeServer(unpack(data.args)) end)
+                else
+                    data.obj:FireServer(unpack(data.args))
+                end
             end
         end
-    end)
-
+    end
+end)
+    
     local function createBtn(text, y, color, bname)
         local b = Instance.new("TextButton", sidePanel)
         b.Name = bname or text; b.Size = UDim2.new(1, 0, 0, 25); b.Position = UDim2.new(0, 0, 0.4, y)
@@ -143,7 +149,6 @@ local function selectRemote(data)
         code = code .. "local args = {"
         
         for i, v in pairs(selected.args) do 
-            -- Mejora: Manejo básico de objetos en los argumentos
             local value = (typeof(v) == "string" and "\""..v.."\"" or (typeof(v) == "Instance" and "game."..v:GetFullName() or tostring(v)))
             code = code .. "\n    ["..i.."] = " .. value .. ","
         end
@@ -155,12 +160,10 @@ local function selectRemote(data)
         
         code = code .. "local remote = game:GetService(\"" .. serviceName .. "\")"
         
-        -- Construir la ruta saltando el nombre del servicio
         for i = 2, #parts do
             code = code .. "[\"" .. parts[i] .. "\"]"
         end
         
-        -- Seleccionar el método correcto según la clase
         local method = (className == "RemoteFunction" and "InvokeServer" or "FireServer")
         code = code .. ":" .. method .. "(unpack(args))"
         
@@ -170,8 +173,16 @@ local function selectRemote(data)
 end)
 
     execBtn.MouseButton1Click:Connect(function()
-        if selected and selected.obj then selected.obj:FireServer(unpack(selected.args)) end
-    end)
+    if selected and selected.obj then
+        if selected.obj.ClassName == "RemoteFunction" then
+            task.spawn(function()
+                selected.obj:InvokeServer(unpack(selected.args))
+            end)
+        else
+            selected.obj:FireServer(unpack(selected.args))
+        end
+    end
+end)
 
     blockBtn.MouseButton1Click:Connect(function()
         if selected then blockedRemotes[selected.name] = true; infoText.Text = "BLOQUEADO EN RED" end
