@@ -71,6 +71,26 @@ local function iniciarMiSpy()
     return s
     end
 
+    local function dispararRemoto(data)
+    if not data or not data.obj then return end
+    
+    -- Usamos pcall para que el script no se rompa si el remoto fue eliminado
+    local success, err = pcall(function()
+        if data.obj:IsA("RemoteFunction") then
+            -- Usamos task.spawn porque las funciones esperan respuesta y pueden dar lag
+            task.spawn(function()
+                data.obj:InvokeServer(unpack(data.args))
+            end)
+        elseif data.obj:IsA("RemoteEvent") then
+            data.obj:FireServer(unpack(data.args))
+        end
+    end)
+    
+    if not success then
+        warn("Error: " .. data.name .. ": " .. err)
+    end
+    end
+
 local function selectRemote(data)
         selected = data
         local code = "local args = {" .. formatArgs(data.args) .. "\n}\ngame:GetService(\"ReplicatedStorage\")." .. data.name .. ":FireServer(unpack(args))"
@@ -86,14 +106,8 @@ local function selectRemote(data)
 
 task.spawn(function()
     while task.wait(1) do
-        for name, data in pairs(activeLoops) do
-            if data.obj then
-                if data.obj.ClassName == "RemoteFunction" then
-                    task.spawn(function() data.obj:InvokeServer(unpack(data.args)) end)
-                else
-                    data.obj:FireServer(unpack(data.args))
-                end
-            end
+        for _, data in pairs(activeLoops) do
+            dispararRemoto(data) -- Llamada a la función
         end
     end
 end)
@@ -171,16 +185,10 @@ end)
         infoText.Text = "¡CÓDIGO (" .. className .. ") COPIADO!"
     end
 end)
-
+    
     execBtn.MouseButton1Click:Connect(function()
-    if selected and selected.obj then
-        if selected.obj.ClassName == "RemoteFunction" then
-            task.spawn(function()
-                selected.obj:InvokeServer(unpack(selected.args))
-            end)
-        else
-            selected.obj:FireServer(unpack(selected.args))
-        end
+    if selected then
+        dispararRemoto(selected) -- Llamada a la función
     end
 end)
 
