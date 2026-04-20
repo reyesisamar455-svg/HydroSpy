@@ -1,0 +1,5 @@
+task.spawn(function()
+    while task.wait(0.5) do
+     game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    end
+end)
