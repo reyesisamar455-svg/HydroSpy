@@ -232,7 +232,7 @@ end)
             
             -- Filtro de spam (pings y posiciones de cámara/personaje)
             local cleanName = name:lower()
-            if not cleanName:find("ping") and not cleanName:find("pos") and not cleanName:find("heartbeat") then
+            if not cleanName:find("ping") and not cleanName:find("Input") and not cleanName:find("heartbeat") then
                 table.insert(queue, {
                     name = name, 
                     obj = self, 
