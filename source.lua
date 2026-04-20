@@ -195,26 +195,39 @@ end)
     end)
 
     clearBtn.MouseButton1Click:Connect(function()
-        for _, v in pairs(logs) do v.btn:Destroy() end
-        logs = {}; infoText.Text = "Logs limpiados."
-    end)
+    for _, v in pairs(logs) do 
+        if v.btn then v.btn:Destroy() end 
+    end
+    
+    logs = {} 
+    table.clear(queue) 
+    
+    selected = nil
+    infoText.Text = ""
+end)
 
-    task.spawn(function()
-        while task.wait(0.1) do
-            if #queue > 0 then
-                local data = table.remove(queue, 1)
-                if not logs[data.name] then
-                    local b = Instance.new("TextButton", listFrame)
-                    b.Size = UDim2.new(1, 0, 0, 28); b.BackgroundColor3 = Color3.fromRGB(45, 54, 66); b.TextColor3 = Color3.new(1, 1, 1); b.Text = " 1 | " .. data.name; b.TextXAlignment = Enum.TextXAlignment.Left; b.BorderSizePixel = 0
-                    b.MouseButton1Click:Connect(function() selectRemote(data) end)
-                    logs[data.name] = {btn = b, count = 1}
-                else
-                    logs[data.name].count = logs[data.name].count + 1
-                    logs[data.name].btn.Text = " " .. logs[data.name].count .. " | " .. data.name
-                end
+task.spawn(function()
+    while task.wait(0.1) do
+        if #queue > 0 then
+            local data = table.remove(queue, 1)
+            if blockedRemotes[data.name] then
+            elseif not logs[data.name] then
+                local b = Instance.new("TextButton", listFrame)
+                b.Size = UDim2.new(1, 0, 0, 28)
+                b.BackgroundColor3 = Color3.fromRGB(45, 54, 66)
+                b.TextColor3 = Color3.new(1, 1, 1)
+                b.Text = " 1 | " .. data.name
+                b.TextXAlignment = Enum.TextXAlignment.Left
+                b.BorderSizePixel = 0
+                b.MouseButton1Click:Connect(function() selectRemote(data) end)
+                logs[data.name] = {btn = b, count = 1}
+            else
+                logs[data.name].count = logs[data.name].count + 1
+                logs[data.name].btn.Text = " " .. logs[data.name].count .. " | " .. data.name
             end
         end
-    end)
+    end
+end)
 
         local mt = getrawmetatable(game)
     local old = mt.__namecall
