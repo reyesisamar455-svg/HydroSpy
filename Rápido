@@ -1,7 +1,5 @@
-local sg = game.Players.LocalPlayer.Character.Humanoid.WalkSpeed
-
 task.spawn(function()
-    while task.wait(0.05) do
-     sg = 100
+    while task.wait(0.1) do
+     game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
     end
 end)
