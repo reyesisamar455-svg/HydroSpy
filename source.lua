@@ -85,7 +85,7 @@ local function iniciarMiSpy()
     end)
     
     if not success then
-        warn("Error: " .. data.name .. ": " .. err)
+        warn(err)
     end
     end
 
@@ -170,7 +170,7 @@ end)
         local parts = path:split(".")
         local serviceName = parts[1]
         
-        code = code .. "local remote = game:GetService(\"" .. serviceName .. "\")"
+        code = code .. "game:GetService(\"" .. serviceName .. "\")"
         
         for i = 2, #parts do
             code = code .. "[\"" .. parts[i] .. "\"]"
@@ -228,7 +228,6 @@ end)
         if (method == "FireServer" or method == "InvokeServer") then
             if blockedRemotes[name] then return nil end
             
-            -- Filtro de spam (pings y posiciones de cámara/personaje)
             local cleanName = name:lower()
             if not cleanName:find("ping") and not cleanName:find("Input") and not cleanName:find("heartbeat") then
                 table.insert(queue, {
