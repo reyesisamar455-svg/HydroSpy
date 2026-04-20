@@ -74,10 +74,8 @@ local function iniciarMiSpy()
     local function dispararRemoto(data)
     if not data or not data.obj then return end
     
-    -- Usamos pcall para que el script no se rompa si el remoto fue eliminado
     local success, err = pcall(function()
         if data.obj:IsA("RemoteFunction") then
-            -- Usamos task.spawn porque las funciones esperan respuesta y pueden dar lag
             task.spawn(function()
                 data.obj:InvokeServer(unpack(data.args))
             end)
