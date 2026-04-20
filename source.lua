@@ -105,7 +105,7 @@ local function selectRemote(data)
 task.spawn(function()
     while task.wait(1) do
         for _, data in pairs(activeLoops) do
-            dispararRemoto(data) -- Llamada a la función
+            dispararRemoto(data)
         end
     end
 end)
@@ -186,7 +186,7 @@ end)
     
     execBtn.MouseButton1Click:Connect(function()
     if selected then
-        dispararRemoto(selected) -- Llamada a la función
+        dispararRemoto(selected)
     end
 end)
 
@@ -225,9 +225,7 @@ end)
         local args = {...}
         local name = tostring(self)
 
-        -- Filtrar RemoteEvents y RemoteFunctions
         if (method == "FireServer" or method == "InvokeServer") then
-            -- Bloqueo de red
             if blockedRemotes[name] then return nil end
             
             -- Filtro de spam (pings y posiciones de cámara/personaje)
