@@ -136,31 +136,36 @@ local function selectRemote(data)
     copyBtn.MouseButton1Click:Connect(function()
     if selected and selected.obj then
         local remote = selected.obj
-        local path = remote:GetFullName() -- Esto obtiene la ruta completa (ej. game.ReplicatedStorage.Events.Remote)
+        local path = remote:GetFullName()
+        local className = remote.ClassName -- Detecta si es RemoteEvent o RemoteFunction
         
-        local code = "-- Script generado por HydroSpy (Ruta Universal)\n\n"
+        local code = "-- Script generado por HydroSpy\n\n"
         code = code .. "local args = {"
         
         for i, v in pairs(selected.args) do 
-            local value = (typeof(v) == "string" and "\""..v.."\"" or tostring(v))
+            -- Mejora: Manejo básico de objetos en los argumentos
+            local value = (typeof(v) == "string" and "\""..v.."\"" or (typeof(v) == "Instance" and "game."..v:GetFullName() or tostring(v)))
             code = code .. "\n    ["..i.."] = " .. value .. ","
         end
         
         code = code .. "\n}\n\n"
-        local serviceName = remote:GetFullName():split(".")[1]
-        local remainingPath = path:sub(serviceName:len() + 2)
         
-        code = code .. "game:GetService(\"" .. serviceName .. "\")"
+        local parts = path:split(".")
+        local serviceName = parts[1]
         
-        -- Si el objeto está dentro de carpetas, las añadimos usando corchetes para evitar errores por espacios
-        for _, part in ipairs(remainingPath:split(".")) do
-            code = code .. "[\"" .. part .. "\"]"
+        code = code .. "local remote = game:GetService(\"" .. serviceName .. "\")"
+        
+        -- Construir la ruta saltando el nombre del servicio
+        for i = 2, #parts do
+            code = code .. "[\"" .. parts[i] .. "\"]"
         end
         
-        code = code .. ":remote:FireServer(unpack(args))"
+        -- Seleccionar el método correcto según la clase
+        local method = (className == "RemoteFunction" and "InvokeServer" or "FireServer")
+        code = code .. ":" .. method .. "(unpack(args))"
         
         setclipboard(code)
-        infoText.Text = "¡COPIADA!"
+        infoText.Text = "¡CÓDIGO (" .. className .. ") COPIADO!"
     end
 end)
 
@@ -194,20 +199,34 @@ end)
         end
     end)
 
-    local mt = getrawmetatable(game)
+        local mt = getrawmetatable(game)
     local old = mt.__namecall
     setreadonly(mt, false)
+    
     mt.__namecall = newcclosure(function(self, ...)
-        local method, name = getnamecallmethod(), tostring(self)
-        if (method == "FireServer" or method == "InvokeServer") and blockedRemotes[name] then return nil end
+        local method = getnamecallmethod()
+        local args = {...}
+        local name = tostring(self)
+
+        -- Filtrar RemoteEvents y RemoteFunctions
         if (method == "FireServer" or method == "InvokeServer") then
-            if not name:lower():find("ping") and not name:lower():find("pos") then
-                table.insert(queue, {name = name, obj = self, args = {...}})
+            -- Bloqueo de red
+            if blockedRemotes[name] then return nil end
+            
+            -- Filtro de spam (pings y posiciones de cámara/personaje)
+            local cleanName = name:lower()
+            if not cleanName:find("ping") and not cleanName:find("pos") and not cleanName:find("heartbeat") then
+                table.insert(queue, {
+                    name = name, 
+                    obj = self, 
+                    args = args
+                })
             end
         end
         return old(self, ...)
     end)
     setreadonly(mt, true)
+
 end
 
 iniciarMiSpy()
