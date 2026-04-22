@@ -242,7 +242,7 @@ end)
             if blockedRemotes[name] then return nil end
             
             local cleanName = name:lower()
-            if not cleanName:find("ping") and not cleanName:find("Input") and not cleanName:find("heartbeat") then
+            if not cleanName:find("ping") and not cleanName:find("input") and not cleanName:find("heartbeat") then
                 table.insert(queue, {
                     name = name, 
                     obj = self, 
