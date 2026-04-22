@@ -1,5 +1,15 @@
+local player = game.Players.LocalPlayer
+
+local function setWalkSpeed(speed)
+    local character = player.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.WalkSpeed = speed
+    end
+end
+
 task.spawn(function()
-    while task.wait(0.1) do
-     game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    while true do
+        setWalkSpeed(100)
+        task.wait(0.1)
     end
 end)
