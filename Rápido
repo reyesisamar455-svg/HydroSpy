@@ -3,7 +3,7 @@ local player = game.Players.LocalPlayer
 local function setWalkSpeed(speed)
     local character = player.Character
     if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid.WalkSpeed = speed
+        character.Humanoid.WalkSpeed = character.Humanoid.WalkSpeed + speed
     end
 end
 
