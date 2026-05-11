@@ -62,35 +62,41 @@ local function iniciarMiSpy()
     local blockedRemotes, activeLoops, logs, queue, selected = {}, {}, {}, {}, nil
     local activeLoopLabels = {}
     local Ignorar = {}
+    
+    -- ✅ FIX: Límite de cola para evitar desbordamiento
+    local MAX_QUEUE_SIZE = 500
 
     local function formatArgs(args)
-    local s = ""
-    for i, v in pairs(args) do
-        local val = typeof(v) == "string" and "\""..v.."\"" or tostring(v)
-        s = s .. "\n    ["..tostring(i).."] = " .. val .. ","
-    end
-    return s
+        local s = ""
+        for i, v in pairs(args) do
+            local val = typeof(v) == "string" and "\""..v.."\"" or tostring(v)
+            s = s .. "\n    ["..tostring(i).."] = " .. val .. ","
+        end
+        return s
     end
 
     local function dispararRemoto(data)
-    if not data or not data.obj then return end
-    
-    local success, err = pcall(function()
-        if data.obj:IsA("RemoteFunction") then
-            task.spawn(function()
-                data.obj:InvokeServer(unpack(data.args))
-            end)
-        elseif data.obj:IsA("RemoteEvent") then
-            data.obj:FireServer(unpack(data.args))
+        if not data or not data.obj then return end
+        
+        -- ✅ FIX: Validar que el remoto aún existe
+        if not data.obj.Parent then return end
+        
+        local success, err = pcall(function()
+            if data.obj:IsA("RemoteFunction") then
+                task.spawn(function()
+                    pcall(function() data.obj:InvokeServer(unpack(data.args)) end)
+                end)
+            elseif data.obj:IsA("RemoteEvent") then
+                pcall(function() data.obj:FireServer(unpack(data.args)) end)
+            end
+        end)
+        
+        if not success then
+            warn(err)
         end
-    end)
-    
-    if not success then
-        warn(err)
-    end
     end
 
-local function selectRemote(data)
+    local function selectRemote(data)
         selected = data
         local code = "fakeVisual \nlocal args = {" .. formatArgs(data.args) .. "\n}\ngame:GetService(\"ReplicatedStorage\")." .. data.name .. ":FireServer(unpack(args))"
         infoText.Text = code
@@ -103,16 +109,19 @@ local function selectRemote(data)
         end
     end
 
-task.spawn(function()
-    while task.wait(1) do
-        for _, data in pairs(activeLoops) do
-            dispararRemoto(data)
+    -- ✅ FIX: Mejor control del loop
+    task.spawn(function()
+        while task.wait(1) do
+            for name, data in pairs(activeLoops) do
+                if data.obj and data.obj.Parent then
+                    dispararRemoto(data)
+                else
+                    activeLoops[name] = nil
+                end
+            end
         end
-    end
-end)
+    end)
 
-
-    
     local function createBtn(text, y, color, bname)
         local b = Instance.new("TextButton", sidePanel)
         b.Name = bname or text; b.Size = UDim2.new(1, 0, 0, 25); b.Position = UDim2.new(0, 0, 0.4, y)
@@ -121,38 +130,35 @@ end)
     end
 
     local function createDobleBtn(text, y, color, bname)
-    -- Contenedor principal para los dos botones
-    local container = Instance.new("Frame")
-    container.Name = bname or text
-    container.Size = UDim2.new(1, -10, 0, 25) -- Un poco de margen a los lados
-    container.Position = UDim2.new(0, 5, 0.4, y)
-    container.BackgroundTransparency = 1 -- Invisible, solo para organizar
-    container.Parent = sidePanel
+        local container = Instance.new("Frame")
+        container.Name = bname or text
+        container.Size = UDim2.new(1, -10, 0, 25)
+        container.Position = UDim2.new(0, 5, 0.4, y)
+        container.BackgroundTransparency = 1
+        container.Parent = sidePanel
 
-    -- Botón Izquierdo (b1)
-    local b1 = Instance.new("TextButton")
-    b1.Name = "Btn1"
-    b1.Size = UDim2.new(0.5, -2, 1, 0)
-    b1.Position = UDim2.new(0, 0, 0, 0)
-    b1.BackgroundColor3 = color or Color3.fromRGB(55, 65, 80)
-    b1.Text = text
-    b1.TextColor3 = Color3.new(1, 1, 1)
-    b1.BorderSizePixel = 0
-    b1.Parent = container
+        local b1 = Instance.new("TextButton")
+        b1.Name = "Btn1"
+        b1.Size = UDim2.new(0.5, -2, 1, 0)
+        b1.Position = UDim2.new(0, 0, 0, 0)
+        b1.BackgroundColor3 = color or Color3.fromRGB(55, 65, 80)
+        b1.Text = text
+        b1.TextColor3 = Color3.new(1, 1, 1)
+        b1.BorderSizePixel = 0
+        b1.Parent = container
 
-    -- Botón Derecho (b2)
-    local b2 = Instance.new("TextButton")
-    b2.Name = "Btn2"
-    b2.Size = UDim2.new(0.5, -2, 1, 0)
-    b2.Position = UDim2.new(0.5, 2, 0, 0)
-    b2.BackgroundColor3 = color or Color3.fromRGB(45, 55, 70) -- Un tono distinto
-    b2.Text = bname
-    b2.TextColor3 = Color3.new(1, 1, 1)
-    b2.BorderSizePixel = 0
-    b2.Parent = container
+        local b2 = Instance.new("TextButton")
+        b2.Name = "Btn2"
+        b2.Size = UDim2.new(0.5, -2, 1, 0)
+        b2.Position = UDim2.new(0.5, 2, 0, 0)
+        b2.BackgroundColor3 = color or Color3.fromRGB(45, 55, 70)
+        b2.Text = bname
+        b2.TextColor3 = Color3.new(1, 1, 1)
+        b2.BorderSizePixel = 0
+        b2.Parent = container
 
-    return {b1, b2}
-end
+        return {b1, b2}
+    end
 
     local copyBtn = createBtn("COPY CODE", 0, Color3.fromRGB(36, 150, 240))
     local execBtn = createBtn("EXECUTE", 30, Color3.fromRGB(60, 140, 80))
@@ -167,7 +173,7 @@ end
             btn.Size = UDim2.new(1, 0, 0, 22); btn.BackgroundColor3 = Color3.fromRGB(40, 45, 60)
             btn.Text = " " .. n; btn.TextColor3 = Color3.new(1, 1, 1); btn.TextSize = 10; btn.TextXAlignment = Enum.TextXAlignment.Left
             Instance.new("UICorner", btn)
-            btn.MouseButton1Click:Connect(function() selectRemote(data) end) -- Smart Navigation
+            btn.MouseButton1Click:Connect(function() selectRemote(data) end)
             activeLoopLabels[n] = btn
         elseif not state and activeLoopLabels[n] then
             activeLoopLabels[n]:Destroy()
@@ -189,96 +195,96 @@ end
     end)
 
     copyBtn.MouseButton1Click:Connect(function()
-    if selected and selected.obj then
-        local remote = selected.obj
-        local className = remote.ClassName
-        
-        local code = "-- Script generado por HydroSpy\n\n"
-        code = code .. "local args = {"
-        
-        for i, v in pairs(selected.args) do 
-            local value = (typeof(v) == "string" and "\""..v.."\"" or (typeof(v) == "Instance" and "game."..v:GetFullName() or tostring(v)))
-            code = code .. "\n    ["..i.."] = " .. value .. ","
-        end
-        code = code .. "\n}\n\n"
-
-        local hierarchy = {}
-        local current = remote
-        
-        while current and current ~= game do
-            table.insert(hierarchy, 1, current.Name)
-            if current.Parent == game then 
-                break 
+        if selected and selected.obj then
+            local remote = selected.obj
+            local className = remote.ClassName
+            
+            local code = "-- Script generado por HydroSpy\n\n"
+            code = code .. "local args = {"
+            
+            for i, v in pairs(selected.args) do 
+                local value = (typeof(v) == "string" and "\""..v.."\"" or (typeof(v) == "Instance" and "game."..v:GetFullName() or tostring(v)))
+                code = code .. "\n    ["..i.."] = " .. value .. ","
             end
-            current = current.Parent
-        end
+            code = code .. "\n}\n\n"
 
-        local serviceName = hierarchy[1]
-        local formattedPath = "game:GetService(\"" .. serviceName .. "\")"
-        
-        -- Añadimos los hijos usando corchetes para que los puntos en los nombres se mantengan
-        for i = 2, #hierarchy do
-            formattedPath = formattedPath .. "[\"" .. hierarchy[i] .. "\"]"
+            local hierarchy = {}
+            local current = remote
+            
+            while current and current ~= game do
+                table.insert(hierarchy, 1, current.Name)
+                if current.Parent == game then 
+                    break 
+                end
+                current = current.Parent
+            end
+
+            local serviceName = hierarchy[1]
+            local formattedPath = "game:GetService(\"" .. serviceName .. "\")"
+            
+            for i = 2, #hierarchy do
+                formattedPath = formattedPath .. "[\"" .. hierarchy[i] .. "\"]"
+            end
+            
+            local method = (className == "RemoteFunction" and "InvokeServer" or "FireServer")
+            code = code .. formattedPath .. ":" .. method .. "(unpack(args))"
+            
+            setclipboard(code)
+            infoText.Text = "¡CÓDIGO COPIADO!"
         end
+    end)
         
-        local method = (className == "RemoteFunction" and "InvokeServer" or "FireServer")
-        code = code .. formattedPath .. ":" .. method .. "(unpack(args))"
-        
-        setclipboard(code)
-        infoText.Text = "¡CÓDIGO COPIADO!"
-    end
-end)
-    
     execBtn.MouseButton1Click:Connect(function()
-    if selected then
-        dispararRemoto(selected)
-    end
-end)
+        if selected then
+            dispararRemoto(selected)
+        end
+    end)
 
     blockBtn[1].MouseButton1Click:Connect(function()
         if selected then blockedRemotes[selected.name] = true; infoText.Text = "BLOQUEADO EN RED" end
     end)
 
     blockBtn[2].MouseButton1Click:Connect(function()
-      if selected then Ignorar[selected.name] = true; infoText.Text = "Ignorar" end
+        if selected then Ignorar[selected.name] = true; infoText.Text = "Ignorar" end
     end)
 
     clearBtn.MouseButton1Click:Connect(function()
-    for _, v in pairs(logs) do 
-        if v.btn then v.btn:Destroy() end 
-    end
-    
-    logs = {} 
-    table.clear(queue) 
-    
-    selected = nil
-    infoText.Text = ""
-end)
+        for _, v in pairs(logs) do 
+            if v.btn then v.btn:Destroy() end 
+        end
+        
+        logs = {} 
+        table.clear(queue) 
+        
+        selected = nil
+        infoText.Text = ""
+    end)
 
-task.spawn(function()
-    while task.wait(0.1) do
-        if #queue > 0 then
-            local data = table.remove(queue, 1)
-            if blockedRemotes[data.name] then
-            elseif not logs[data.name] then
-                local b = Instance.new("TextButton", listFrame)
-                b.Size = UDim2.new(1, 0, 0, 28)
-                b.BackgroundColor3 = Color3.fromRGB(45, 54, 66)
-                b.TextColor3 = Color3.new(1, 1, 1)
-                b.Text = " 1 | " .. data.name
-                b.TextXAlignment = Enum.TextXAlignment.Left
-                b.BorderSizePixel = 0
-                b.MouseButton1Click:Connect(function() selectRemote(data) end)
-                logs[data.name] = {btn = b, count = 1}
-            else
-                logs[data.name].count = logs[data.name].count + 1
-                logs[data.name].btn.Text = " " .. logs[data.name].count .. " | " .. data.name
+    task.spawn(function()
+        while task.wait(0.1) do
+            if #queue > 0 then
+                local data = table.remove(queue, 1)
+                if blockedRemotes[data.name] then
+                elseif not logs[data.name] then
+                    local b = Instance.new("TextButton", listFrame)
+                    b.Size = UDim2.new(1, 0, 0, 28)
+                    b.BackgroundColor3 = Color3.fromRGB(45, 54, 66)
+                    b.TextColor3 = Color3.new(1, 1, 1)
+                    b.Text = " 1 | " .. data.name
+                    b.TextXAlignment = Enum.TextXAlignment.Left
+                    b.BorderSizePixel = 0
+                    b.MouseButton1Click:Connect(function() selectRemote(data) end)
+                    logs[data.name] = {btn = b, count = 1}
+                else
+                    logs[data.name].count = logs[data.name].count + 1
+                    logs[data.name].btn.Text = " " .. logs[data.name].count .. " | " .. data.name
+                end
             end
         end
-    end
-end)
+    end)
 
-        local mt = getrawmetatable(game)
+    -- ✅ FIX: Hook mejorado con validaciones
+    local mt = getrawmetatable(game)
     local old = mt.__namecall
     setreadonly(mt, false)
     
@@ -290,8 +296,8 @@ end)
         if (method == "FireServer" or method == "InvokeServer") then
             if blockedRemotes[name] then return nil end
             
-            local cleanName = name:lower()
-            if not Ignorar[name] then
+            -- ✅ FIX: Límite de cola + validación
+            if not Ignorar[name] and #queue < MAX_QUEUE_SIZE then
                 table.insert(queue, {
                     name = name, 
                     obj = self, 
