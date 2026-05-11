@@ -277,7 +277,6 @@ local function iniciarMiSpy()
                 local b = Instance.new("TextButton", listFrame)
                 b.Size = UDim2.new(1, 0, 0, 28)
                 b.BackgroundColor3 = Color3.fromRGB(45, 54, 66)
-                b.TextColor3 = Color3.new(1, 1, 1)
                 b.Text = " "
                 b.TextXAlignment = Enum.TextXAlignment.Left
                 b.Font = Enum.Font.SourceSans
@@ -291,6 +290,7 @@ local function iniciarMiSpy()
                 text.Font = Enum.Font.SourceSans
                 text.TextScaled = true
                 text.BackgroundTransparency = 1
+                text.TextColor3 = Color3.new(1, 1, 1)
                 text.Text = "1 | " .. data.name
                         
                 -- Añadir el Icono (Usa las variables que definiste)
