@@ -2,6 +2,8 @@ local CoreGui = game:GetService("CoreGui")
 local setclipboard = setclipboard or print 
 
 local function iniciarMiSpy()
+    local functionImage = "http://www.roblox.com/asset/?id=413369623"
+    local eventImage = "http://www.roblox.com/asset/?id=413369506"
     if CoreGui:FindFirstChild("TurtleSpy_Final") then CoreGui.TurtleSpy_Final:Destroy() end
 
     local sg = Instance.new("ScreenGui", CoreGui)
@@ -261,27 +263,61 @@ local function iniciarMiSpy()
     end)
 
     task.spawn(function()
-        while task.wait(0.1) do
-            if #queue > 0 then
-                local data = table.remove(queue, 1)
-                if blockedRemotes[data.name] then
-                elseif not logs[data.name] then
-                    local b = Instance.new("TextButton", listFrame)
-                    b.Size = UDim2.new(1, 0, 0, 28)
-                    b.BackgroundColor3 = Color3.fromRGB(45, 54, 66)
-                    b.TextColor3 = Color3.new(1, 1, 1)
-                    b.Text = " 1 | " .. data.name
-                    b.TextXAlignment = Enum.TextXAlignment.Left
-                    b.BorderSizePixel = 0
-                    b.MouseButton1Click:Connect(function() selectRemote(data) end)
-                    logs[data.name] = {btn = b, count = 1}
-                else
-                    logs[data.name].count = logs[data.name].count + 1
-                    logs[data.name].btn.Text = " " .. logs[data.name].count .. " | " .. data.name
-                end
+    while task.wait(0.1) do
+        if #queue > 0 then
+            local data = table.remove(queue, 1)
+            
+            -- Si está bloqueado, lo ignoramos totalmente
+            if blockedRemotes[data.name] then 
+                continue 
+            end
+            
+            if not logs[data.name] then
+                -- Crear el botón principal
+                local b = Instance.new("TextButton", listFrame)
+                b.Size = UDim2.new(1, 0, 0, 28)
+                b.BackgroundColor3 = Color3.fromRGB(45, 54, 66)
+                b.TextColor3 = Color3.new(1, 1, 1)
+                b.Text = " "
+                b.TextXAlignment = Enum.TextXAlignment.Left
+                b.Font = Enum.Font.SourceSans
+                b.TextSize = 13
+                b.BorderSizePixel = 0
+
+                local text = Instance.new("TextLabel", b)      
+                text.Size = UDim2.new(0.829999983, 0, 1, 0)
+                text.Position = UDim2.new(0.150000006, 0, 0, 0)  
+                text.TextXAlignment = Enum.TextXAlignment.Left
+                text.Font = Enum.Font.SourceSans
+                text.TextScaled = true
+                text.BackgroundTransparency = 1
+                text.Text = "1 | " .. data.name
+                        
+                -- Añadir el Icono (Usa las variables que definiste)
+                local icon = Instance.new("ImageLabel", b)
+                icon.Size = UDim2.new(0, 18, 0, 18)
+                icon.Position = UDim2.new(0, 5, 0.5, -9)
+                icon.BackgroundTransparency = 1
+                icon.Image = (data.obj:IsA("RemoteFunction") and functionImage or eventImage)
+                
+                -- UI Design: Un pequeño borde para separar
+                local line = Instance.new("Frame", b)
+                line.Size = UDim2.new(1, 0, 0, 1)
+                line.Position = UDim2.new(0, 0, 1, -1)
+                line.BackgroundColor3 = Color3.fromRGB(35, 42, 53)
+                line.BorderSizePixel = 0
+
+                b.MouseButton1Click:Connect(function() selectRemote(data) end)
+                
+                logs[data.name] = {btn = b, count = 1, H = text}
+            else
+                -- Actualizar contador de forma eficiente
+                logs[data.name].count = logs[data.name].count + 1
+                logs[data.name].H.Text = logs[data.name].count .. " | " .. data.name
             end
         end
-    end)
+    end
+end)
 
     -- ✅ FIX: Hook mejorado con validaciones
     local mt = getrawmetatable(game)
@@ -312,3 +348,4 @@ local function iniciarMiSpy()
 end
 
 iniciarMiSpy()
+
