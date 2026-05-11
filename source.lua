@@ -1,4 +1,45 @@
-false; Instance.new("UICorner", loopWindow)
+local CoreGui = game:GetService("CoreGui")
+local setclipboard = setclipboard or print 
+
+local function iniciarMiSpy()
+    if CoreGui:FindFirstChild("TurtleSpy_Final") then CoreGui.TurtleSpy_Final:Destroy() end
+
+    local sg = Instance.new("ScreenGui", CoreGui)
+    sg.Name = "TurtleSpy_Final"
+
+    local toggleBtn = Instance.new("TextButton", sg)
+    toggleBtn.Name = "SpyToggle"
+    toggleBtn.Size = UDim2.new(0, 45, 0, 45)
+    toggleBtn.Position = UDim2.new(0, 15, 0.5, -22)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(36, 150, 240)
+    toggleBtn.Text = "🐲"; toggleBtn.TextSize = 25; toggleBtn.ZIndex = 10
+    toggleBtn.Active = true; toggleBtn.Draggable = true 
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+
+    local main = Instance.new("Frame", sg)
+    main.Size = UDim2.new(0, 460, 0, 280)
+    main.Position = UDim2.new(0.5, 0, 0.5, 0); main.AnchorPoint = Vector2.new(0.5, 0.5)
+    main.BackgroundColor3 = Color3.fromRGB(35, 42, 53); main.BorderSizePixel = 0
+    main.Active = true; main.Draggable = true; main.Visible = true
+
+    toggleBtn.MouseButton1Click:Connect(function() main.Visible = not main.Visible end)
+
+    local topBar = Instance.new("Frame", main)
+    topBar.Size = UDim2.new(1, 0, 0, 30); topBar.BackgroundColor3 = Color3.fromRGB(36, 150, 240); topBar.BorderSizePixel = 0
+
+    local title = Instance.new("TextLabel", topBar)
+    title.Size = UDim2.new(0.6, 0, 1, 0); title.Position = UDim2.new(0, 10, 0, 0)
+    title.Text = "HydroSpy"; title.TextColor3 = Color3.new(1, 1, 1)
+    title.BackgroundTransparency = 1; title.Font = Enum.Font.SourceSansBold; title.TextXAlignment = Enum.TextXAlignment.Left
+
+    local loopsBtn = Instance.new("TextButton", topBar)
+    loopsBtn.Size = UDim2.new(0, 80, 0, 22); loopsBtn.Position = UDim2.new(1, -90, 0, 4)
+    loopsBtn.BackgroundColor3 = Color3.fromRGB(25, 30, 40); loopsBtn.Text = "BUCLES"; loopsBtn.TextColor3 = Color3.new(1, 1, 1)
+    loopsBtn.Font = Enum.Font.SourceSansBold; loopsBtn.TextSize = 12; Instance.new("UICorner", loopsBtn)
+
+    local loopWindow = Instance.new("Frame", main)
+    loopWindow.Size = UDim2.new(0, 150, 0, 180); loopWindow.Position = UDim2.new(1, 5, 0, 0)
+    loopWindow.BackgroundColor3 = Color3.fromRGB(30, 35, 45); loopWindow.Visible = false; Instance.new("UICorner", loopWindow)
     
     local lwList = Instance.new("ScrollingFrame", loopWindow)
     lwList.Size = UDim2.new(1, -10, 1, -10); lwList.Position = UDim2.new(0, 5, 0, 5)
