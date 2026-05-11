@@ -1,45 +1,4 @@
-local CoreGui = game:GetService("CoreGui")
-local setclipboard = setclipboard or print 
-
-local function iniciarMiSpy()
-    if CoreGui:FindFirstChild("TurtleSpy_Final") then CoreGui.TurtleSpy_Final:Destroy() end
-
-    local sg = Instance.new("ScreenGui", CoreGui)
-    sg.Name = "TurtleSpy_Final"
-
-    local toggleBtn = Instance.new("TextButton", sg)
-    toggleBtn.Name = "SpyToggle"
-    toggleBtn.Size = UDim2.new(0, 45, 0, 45)
-    toggleBtn.Position = UDim2.new(0, 15, 0.5, -22)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(36, 150, 240)
-    toggleBtn.Text = "🐲"; toggleBtn.TextSize = 25; toggleBtn.ZIndex = 10
-    toggleBtn.Active = true; toggleBtn.Draggable = true 
-    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
-
-    local main = Instance.new("Frame", sg)
-    main.Size = UDim2.new(0, 460, 0, 280)
-    main.Position = UDim2.new(0.5, 0, 0.5, 0); main.AnchorPoint = Vector2.new(0.5, 0.5)
-    main.BackgroundColor3 = Color3.fromRGB(35, 42, 53); main.BorderSizePixel = 0
-    main.Active = true; main.Draggable = true; main.Visible = true
-
-    toggleBtn.MouseButton1Click:Connect(function() main.Visible = not main.Visible end)
-
-    local topBar = Instance.new("Frame", main)
-    topBar.Size = UDim2.new(1, 0, 0, 30); topBar.BackgroundColor3 = Color3.fromRGB(36, 150, 240); topBar.BorderSizePixel = 0
-
-    local title = Instance.new("TextLabel", topBar)
-    title.Size = UDim2.new(0.6, 0, 1, 0); title.Position = UDim2.new(0, 10, 0, 0)
-    title.Text = "HydroSpy"; title.TextColor3 = Color3.new(1, 1, 1)
-    title.BackgroundTransparency = 1; title.Font = Enum.Font.SourceSansBold; title.TextXAlignment = Enum.TextXAlignment.Left
-
-    local loopsBtn = Instance.new("TextButton", topBar)
-    loopsBtn.Size = UDim2.new(0, 80, 0, 22); loopsBtn.Position = UDim2.new(1, -90, 0, 4)
-    loopsBtn.BackgroundColor3 = Color3.fromRGB(25, 30, 40); loopsBtn.Text = "BUCLES"; loopsBtn.TextColor3 = Color3.new(1, 1, 1)
-    loopsBtn.Font = Enum.Font.SourceSansBold; loopsBtn.TextSize = 12; Instance.new("UICorner", loopsBtn)
-
-    local loopWindow = Instance.new("Frame", main)
-    loopWindow.Size = UDim2.new(0, 150, 0, 180); loopWindow.Position = UDim2.new(1, 5, 0, 0)
-    loopWindow.BackgroundColor3 = Color3.fromRGB(30, 35, 45); loopWindow.Visible = false; Instance.new("UICorner", loopWindow)
+false; Instance.new("UICorner", loopWindow)
     
     local lwList = Instance.new("ScrollingFrame", loopWindow)
     lwList.Size = UDim2.new(1, -10, 1, -10); lwList.Position = UDim2.new(0, 5, 0, 5)
@@ -61,6 +20,7 @@ local function iniciarMiSpy()
 
     local blockedRemotes, activeLoops, logs, queue, selected = {}, {}, {}, {}, nil
     local activeLoopLabels = {}
+    local Ignorar = {}
 
     local function formatArgs(args)
     local s = ""
@@ -91,7 +51,7 @@ local function iniciarMiSpy()
 
 local function selectRemote(data)
         selected = data
-        local code = "local args = {" .. formatArgs(data.args) .. "\n}\ngame:GetService(\"ReplicatedStorage\")." .. data.name .. ":FireServer(unpack(args))"
+        local code = "fakeVisual \nlocal args = {" .. formatArgs(data.args) .. "\n}\ngame:GetService(\"ReplicatedStorage\")." .. data.name .. ":FireServer(unpack(args))"
         infoText.Text = code
         
         local isLooping = activeLoops[data.name] ~= nil
@@ -109,6 +69,8 @@ task.spawn(function()
         end
     end
 end)
+
+
     
     local function createBtn(text, y, color, bname)
         local b = Instance.new("TextButton", sidePanel)
@@ -117,10 +79,44 @@ end)
         return b
     end
 
+    local function createDobleBtn(text, y, color, bname)
+    -- Contenedor principal para los dos botones
+    local container = Instance.new("Frame")
+    container.Name = bname or text
+    container.Size = UDim2.new(1, -10, 0, 25) -- Un poco de margen a los lados
+    container.Position = UDim2.new(0, 5, 0.4, y)
+    container.BackgroundTransparency = 1 -- Invisible, solo para organizar
+    container.Parent = sidePanel
+
+    -- Botón Izquierdo (b1)
+    local b1 = Instance.new("TextButton")
+    b1.Name = "Btn1"
+    b1.Size = UDim2.new(0.5, -2, 1, 0)
+    b1.Position = UDim2.new(0, 0, 0, 0)
+    b1.BackgroundColor3 = color or Color3.fromRGB(55, 65, 80)
+    b1.Text = text
+    b1.TextColor3 = Color3.new(1, 1, 1)
+    b1.BorderSizePixel = 0
+    b1.Parent = container
+
+    -- Botón Derecho (b2)
+    local b2 = Instance.new("TextButton")
+    b2.Name = "Btn2"
+    b2.Size = UDim2.new(0.5, -2, 1, 0)
+    b2.Position = UDim2.new(0.5, 2, 0, 0)
+    b2.BackgroundColor3 = color or Color3.fromRGB(45, 55, 70) -- Un tono distinto
+    b2.Text = bname
+    b2.TextColor3 = Color3.new(1, 1, 1)
+    b2.BorderSizePixel = 0
+    b2.Parent = container
+
+    return {b1, b2}
+end
+
     local copyBtn = createBtn("COPY CODE", 0, Color3.fromRGB(36, 150, 240))
     local execBtn = createBtn("EXECUTE", 30, Color3.fromRGB(60, 140, 80))
     local loopBtn = createBtn("LOOP: OFF", 60, nil, "LoopBtn")
-    local blockBtn = createBtn("BLOCK RED", 90, Color3.fromRGB(160, 50, 50))
+    local blockBtn = createDobleBtn("BLOCK RED", 90, Color3.fromRGB(160, 50, 50), "Ignora")
     local clearBtn = createBtn("CLEAR LOGS", 120, Color3.fromRGB(80, 80, 80))
 
     local function updateLoopWindow(data, state)
@@ -154,8 +150,7 @@ end)
     copyBtn.MouseButton1Click:Connect(function()
     if selected and selected.obj then
         local remote = selected.obj
-        local path = remote:GetFullName()
-        local className = remote.ClassName -- Detecta si es RemoteEvent o RemoteFunction
+        local className = remote.ClassName
         
         local code = "-- Script generado por HydroSpy\n\n"
         code = code .. "local args = {"
@@ -164,23 +159,32 @@ end)
             local value = (typeof(v) == "string" and "\""..v.."\"" or (typeof(v) == "Instance" and "game."..v:GetFullName() or tostring(v)))
             code = code .. "\n    ["..i.."] = " .. value .. ","
         end
-        
         code = code .. "\n}\n\n"
+
+        local hierarchy = {}
+        local current = remote
         
-        local parts = path:split(".")
-        local serviceName = parts[1]
+        while current and current ~= game do
+            table.insert(hierarchy, 1, current.Name)
+            if current.Parent == game then 
+                break 
+            end
+            current = current.Parent
+        end
+
+        local serviceName = hierarchy[1]
+        local formattedPath = "game:GetService(\"" .. serviceName .. "\")"
         
-        code = code .. "game:GetService(\"" .. serviceName .. "\")"
-        
-        for i = 2, #parts do
-            code = code .. "[\"" .. parts[i] .. "\"]"
+        -- Añadimos los hijos usando corchetes para que los puntos en los nombres se mantengan
+        for i = 2, #hierarchy do
+            formattedPath = formattedPath .. "[\"" .. hierarchy[i] .. "\"]"
         end
         
         local method = (className == "RemoteFunction" and "InvokeServer" or "FireServer")
-        code = code .. ":" .. method .. "(unpack(args))"
+        code = code .. formattedPath .. ":" .. method .. "(unpack(args))"
         
         setclipboard(code)
-        infoText.Text = "¡CÓDIGO (" .. className .. ") COPIADO!"
+        infoText.Text = "¡CÓDIGO COPIADO!"
     end
 end)
     
@@ -190,8 +194,12 @@ end)
     end
 end)
 
-    blockBtn.MouseButton1Click:Connect(function()
+    blockBtn[1].MouseButton1Click:Connect(function()
         if selected then blockedRemotes[selected.name] = true; infoText.Text = "BLOQUEADO EN RED" end
+    end)
+
+    blockBtn[2].MouseButton1Click:Connect(function()
+      if selected then Ignorar[selected.name] = true; infoText.Text = "Ignorar" end
     end)
 
     clearBtn.MouseButton1Click:Connect(function()
@@ -242,7 +250,7 @@ end)
             if blockedRemotes[name] then return nil end
             
             local cleanName = name:lower()
-            if not cleanName:find("ping") and not cleanName:find("input") and not cleanName:find("heartbeat") then
+            if not Ignorar[name] then
                 table.insert(queue, {
                     name = name, 
                     obj = self, 
